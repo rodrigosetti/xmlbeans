@@ -28,6 +28,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.SAXException;
 import org.xml.sax.DTDHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -3041,15 +3042,29 @@ public final class Locale
         }
     }
 
-    private static SaxLoader getPiccoloSaxLoader()
+    /**
+     * @return  A SaxLoader from cache, or from platform's default
+     * implementation (and then cache).
+     */
+    private static SaxLoader getCachedSaxLoader()
     {
-        SaxLoader piccoloLoader = (SaxLoader) SystemCache.get().getSaxLoader();
-        if (piccoloLoader == null)
-        {
-            piccoloLoader = PiccoloSaxLoader.newInstance();
-            SystemCache.get().setSaxLoader(piccoloLoader);
-        }
-        return piccoloLoader;
+        SaxLoader cachedLoader = (SaxLoader) SystemCache.get().getSaxLoader();
+        if (cachedLoader == null)
+         {
+            try {
+                // Get platform's default XMLReader for use and wraps in the
+                // cache.
+                XMLReader reader = XMLReaderFactory.createXMLReader();
+                cachedLoader = new CachedXmlReaderSaxLoader(reader);
+            } catch (SAXException e) {
+                // This should is very unexpected. Usually all platforms will
+                // provide a default XMLReader. Nevertheless, the fall-back
+                // here is to use Piccollo.
+                cachedLoader = PiccoloSaxLoader.newInstance();
+            }
+            SystemCache.get().setSaxLoader(cachedLoader);
+         }
+        return cachedLoader;
     }
 
     private static SaxLoader getSaxLoader(XmlOptions options)
@@ -3088,9 +3103,7 @@ public final class Locale
         }
         else
         {
-            sl = getPiccoloSaxLoader();
-
-            // Piccolo doesnot mind a null entity resolver ...
+            sl = getCachedSaxLoader();
 
             sl.setEntityResolver(er);
         }
@@ -3102,6 +3115,15 @@ public final class Locale
         extends SaxLoader
     {
         XmlReaderSaxLoader(XMLReader xr)
+        {
+            super(xr, null);
+        }
+    }
+
+    private static class CachedXmlReaderSaxLoader
+        extends SaxLoader
+    {
+        private CachedXmlReaderSaxLoader(XMLReader xr)
         {
             super(xr, null);
         }

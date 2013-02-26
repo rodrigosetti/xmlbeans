@@ -109,7 +109,7 @@
 		http://easynews.dl.sourceforge.net/sourceforge/saxon/saxonb8-7-3j.zip
 	-->
         <get dest="external/lib/saxonb8-8j.zip"
-	    src="http://easynews.dl.sourceforge.net/sourceforge/saxon/saxonb8-8j.zip"
+	    src="http://prdownloads.sourceforge.net/saxon/saxonb8-8j.zip"
             verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <unzip src="external/lib/saxonb8-8j.zip" dest="external/lib/">
             <patternset>
